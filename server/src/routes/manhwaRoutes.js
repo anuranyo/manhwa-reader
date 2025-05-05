@@ -31,6 +31,23 @@ router.get('/:manhwaId/chapters', getManhwaChapters);
 // @access  Public
 router.get('/chapter/:chapterId', getChapterContent);
 
+// @route   GET /api/manhwa/popular
+// @desc    Get popular manhwas
+// @access  Public
+router.get('/popular', async (req, res, next) => {
+  try {
+    const { limit = 20, offset = 0 } = req.query;
+    
+    const results = await searchManga('', parseInt(limit), parseInt(offset), {
+      order: { followedCount: 'desc' }
+    });
+    
+    res.json(results);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // @route   POST /api/manhwa/:manhwaId/progress
 // @desc    Update reading progress
 // @access  Private

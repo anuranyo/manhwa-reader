@@ -79,6 +79,7 @@
     },
     "categories": {
       "myCategories": "Мої категорії",
+      "featured": "Featured Categories",
       "createNew": "Створити нову категорію",
       "editCategory": "Редагувати категорію",
       "deleteCategory": "Видалити категорію",

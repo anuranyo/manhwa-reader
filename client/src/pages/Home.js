@@ -24,6 +24,7 @@ import { searchManhwas } from '../api/manhwaService';
 import { getRecommendations } from '../api/recommendationService';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import ManhwaCard from '../components/common/ManhwaCard';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -31,10 +32,14 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState(0);
   
   // Fetch popular manhwas
-  const { data: popularData, isLoading: popularLoading } = useQuery(
+  const { data: popularData, isLoading: popularLoading, error: popularError } = useQuery(
     'popularManhwas',
     () => searchManhwas('', 10, 0, { order: { followedCount: 'desc' } }),
-    { staleTime: 300000 } // 5 minutes
+    { 
+      staleTime: 300000, // 5 minutes
+      retry: 3,
+      onError: (error) => console.error('Error fetching popular manhwas:', error)
+    }
   );
   
   // Fetch latest updates
@@ -151,70 +156,26 @@ const Home = () => {
             initial="hidden"
             animate="visible"
           >
-            <Grid container spacing={3}>
-              {popularLoading
-                ? Array.from(new Array(8)).map((_, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                      <Card>
-                        <Skeleton variant="rectangular" height={320} />
-                        <CardContent>
-                          <Skeleton variant="text" />
-                          <Skeleton variant="text" width="60%" />
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))
-                : popularData?.manga?.map((manhwa) => (
-                    <Grid item xs={12} sm={6} md={3} key={manhwa.id} component={motion.div} variants={itemVariants}>
-                      <Card 
-                        sx={{ 
-                          height: '100%', 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          transition: 'transform 0.3s, box-shadow 0.3s',
-                          '&:hover': {
-                            transform: 'translateY(-8px)',
-                            boxShadow: 8
-                          }
-                        }}
-                      >
-                        <CardMedia
-                          component="img"
-                          image={manhwa.coverImage || '/placeholder-cover.jpg'}
-                          alt={manhwa.title}
-                          height={320}
-                          sx={{ objectFit: 'cover' }}
-                        />
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {manhwa.title}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Rating value={manhwa.rating || 0} readOnly size="small" precision={0.5} />
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                          }}>
-                            {manhwa.description || 'No description available.'}
-                          </Typography>
-                        </CardContent>
-                        <CardActions>
-                          <Button 
-                            size="small" 
-                            component={RouterLink}
-                            to={`/manhwa/${manhwa.id}`}
-                          >
-                            {t('common.view')}
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  ))}
-            </Grid>
+          <Grid container spacing={3}>
+            {popularLoading
+              ? Array.from(new Array(6)).map((_, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                    <Card>
+                      <Skeleton variant="rectangular" height={250} />
+                      <CardContent>
+                        <Skeleton variant="text" />
+                        <Skeleton variant="text" width="60%" />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))
+              : popularData?.manga?.map((manhwa) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={manhwa.id} component={motion.div} variants={itemVariants}>
+                    <ManhwaCard manhwa={manhwa} />
+                  </Grid>
+                ))}
+          </Grid>
+            
             <Box sx={{ mt: 4, textAlign: 'center' }}>
               <Button 
                 variant="outlined" 
@@ -236,10 +197,10 @@ const Home = () => {
           >
             <Grid container spacing={3}>
               {latestLoading
-                ? Array.from(new Array(8)).map((_, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
+                ? Array.from(new Array(6)).map((_, index) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                       <Card>
-                        <Skeleton variant="rectangular" height={320} />
+                        <Skeleton variant="rectangular" height={250} />
                         <CardContent>
                           <Skeleton variant="text" />
                           <Skeleton variant="text" width="60%" />
@@ -248,79 +209,14 @@ const Home = () => {
                     </Grid>
                   ))
                 : latestData?.manga?.map((manhwa) => (
-                    <Grid item xs={12} sm={6} md={3} key={manhwa.id} component={motion.div} variants={itemVariants}>
-                      <Card 
-                        sx={{ 
-                          height: '100%', 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          transition: 'transform 0.3s, box-shadow 0.3s',
-                          '&:hover': {
-                            transform: 'translateY(-8px)',
-                            boxShadow: 8
-                          }
-                        }}
-                      >
-                        <Box sx={{ position: 'relative' }}>
-                          <CardMedia
-                            component="img"
-                            image={manhwa.coverImage || '/placeholder-cover.jpg'}
-                            alt={manhwa.title}
-                            height={320}
-                            sx={{ objectFit: 'cover' }}
-                          />
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 10,
-                              right: 10,
-                              bgcolor: 'secondary.main',
-                              color: 'white',
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: 1,
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            NEW
-                          </Box>
-                        </Box>
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {manhwa.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {t('manhwa.status')}: {manhwa.status || 'Unknown'}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                          }}>
-                            {manhwa.description || 'No description available.'}
-                          </Typography>
-                        </CardContent>
-                        <CardActions>
-                          <Button 
-                            size="small" 
-                            component={RouterLink}
-                            to={`/manhwa/${manhwa.id}`}
-                          >
-                            {t('common.view')}
-                          </Button>
-                          <Button 
-                            size="small" 
-                            component={RouterLink}
-                            to={`/manhwa/${manhwa.id}`}
-                            color="secondary"
-                          >
-                            {t('manhwa.readNow')}
-                          </Button>
-                        </CardActions>
-                      </Card>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={manhwa.id} component={motion.div} variants={itemVariants}>
+                      <ManhwaCard 
+                        manhwa={manhwa} 
+                        showNewBadge={true} 
+                        showReadButton={true} 
+                        imageHeight={300}
+                        showCompletedBadge={manhwa.status === 'completed'}
+                      />
                     </Grid>
                   ))}
             </Grid>
@@ -345,8 +241,8 @@ const Home = () => {
           >
             {recommendationsLoading ? (
               <Grid container spacing={3}>
-                {Array.from(new Array(4)).map((_, index) => (
-                  <Grid item xs={12} sm={6} key={index}>
+                {Array.from(new Array(3)).map((_, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                     <Card sx={{ display: 'flex', height: '200px' }}>
                       <Skeleton variant="rectangular" width={140} height={200} />
                       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -362,52 +258,60 @@ const Home = () => {
                 ))}
               </Grid>
             ) : recommendationsData?.recommendations?.length > 0 ? (
-              <Grid container spacing={3}>
-                {recommendationsData.recommendations.map((rec, index) => (
-                  <Grid item xs={12} sm={6} key={index} component={motion.div} variants={itemVariants}>
-                    <Card sx={{ display: 'flex', height: '100%' }}>
+            <Grid container spacing={3}>
+              {recommendationsData.recommendations.map((rec, index) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} component={motion.div} variants={itemVariants}>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ position: 'relative', height: 200, overflow: 'hidden' }}>
                       <CardMedia
                         component="img"
-                        sx={{ width: 140 }}
                         image={rec.coverImage || '/placeholder-cover.jpg'}
                         alt={rec.title}
+                        sx={{ height: '100%', objectFit: 'cover' }}
                       />
-                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <CardContent sx={{ flex: '1 0 auto' }}>
-                          <Typography component="div" variant="h6">
-                            {rec.title}
-                          </Typography>
-                          <Typography variant="subtitle2" color="text.secondary" component="div">
-                            {rec.description}
-                          </Typography>
-                          <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                            {rec.reason}
-                          </Typography>
-                        </CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', pl: 1, pb: 1 }}>
-                          {rec.id ? (
-                            <Button 
-                              size="small" 
-                              component={RouterLink}
-                              to={`/manhwa/${rec.id}`}
-                            >
-                              {t('common.view')}
-                            </Button>
-                          ) : (
-                            <Button 
-                              size="small" 
-                              component={RouterLink}
-                              to={`/search?q=${encodeURIComponent(rec.title)}`}
-                            >
-                              {t('common.search')}
-                            </Button>
-                          )}
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+                    </Box>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography variant="h6" component="div" gutterBottom noWrap>
+                        {rec.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        mb: 1
+                      }}>
+                        {rec.description}
+                      </Typography>
+                      <Typography variant="body2" color="primary">
+                        {rec.reason}
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      {rec.id ? (
+                        <Button 
+                          size="small" 
+                          component={RouterLink}
+                          to={`/manhwa/${rec.id}`}
+                          variant="outlined"
+                        >
+                          {t('common.view')}
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="small" 
+                          component={RouterLink}
+                          to={`/search?q=${encodeURIComponent(rec.title)}`}
+                          variant="outlined"
+                        >
+                          {t('common.search')}
+                        </Button>
+                      )}
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
             ) : (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body1">
@@ -425,51 +329,6 @@ const Home = () => {
             )}
           </motion.div>
         )}
-      </Box>
-      
-      {/* Featured Categories */}
-      <Box sx={{ my: 8 }}>
-        <Typography 
-          variant="h4" 
-          component="h2" 
-          gutterBottom
-          sx={{ mb: 4, fontWeight: 600 }}
-        >
-          {t('categories.featured')}
-        </Typography>
-        <Divider sx={{ mb: 4 }} />
-        
-        <Grid container spacing={2}>
-          {['Action', 'Romance', 'Fantasy', 'Comedy', 'Drama', 'Slice of Life'].map((category) => (
-            <Grid item xs={6} sm={4} md={2} key={category}>
-              <Paper
-                component={motion.div}
-                whileHover={{ scale: 1.05 }}
-                sx={{
-                  p: 2,
-                  textAlign: 'center',
-                  height: '100px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  bgcolor: 'background.card',
-                }}
-              >
-                <Link 
-                  component={RouterLink}
-                  to={`/browse?genre=${category}`}
-                  underline="none"
-                  color="inherit"
-                >
-                  <Typography variant="h6" component="div">
-                    {category}
-                  </Typography>
-                </Link>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
       </Box>
     </Container>
   );

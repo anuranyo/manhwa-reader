@@ -140,6 +140,7 @@
     },
     "common": {
       "save": "Save",
+      "viewMore": "View More",
       "cancel": "Cancel",
       "delete": "Delete",
       "edit": "Edit",

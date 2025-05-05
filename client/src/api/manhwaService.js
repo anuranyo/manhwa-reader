@@ -1,14 +1,25 @@
 import api from './api';
 
 // Search manhwas
-export const searchManhwas = async (query, limit = 20, offset = 0) => {
+export const searchManhwas = async (query = '', limit = 20, offset = 0, options = {}) => {
   try {
+    // For empty queries, use a default search term or change the endpoint
+    const actualQuery = query || 'popular'; // Use 'popular' as default query for empty strings
+    
     const response = await api.get('/manhwa/search', {
-      params: { query, limit, offset }
+      params: { 
+        query: actualQuery, 
+        limit, 
+        offset,
+        ...options 
+      }
     });
+    
     return response.data;
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Server error');
+    console.error('Error searching manhwas:', error);
+    // Return empty results instead of throwing error
+    return { manga: [], total: 0 };
   }
 };
 

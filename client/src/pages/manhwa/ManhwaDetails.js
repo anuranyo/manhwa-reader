@@ -62,6 +62,8 @@ const ManhwaDetails = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
+
+  const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
   
   // Fetch manhwa details
   const { data: detailsData, isLoading: detailsLoading } = useQuery(
@@ -170,8 +172,31 @@ const ManhwaDetails = () => {
   
   // Add to library
   const handleAddToLibrary = () => {
+    // Show loading state on button while request is in progress
+    setIsAddingToLibrary(true);
+    
     updateProgressMutation.mutate({ 
-      status: selectedStatus || 'reading'
+      status: selectedStatus || 'reading' 
+    }, {
+      onSuccess: (data) => {
+        // Force update of user progress in UI without requiring a refetch
+        queryClient.setQueryData(['manhwaDetails', manhwaId], (oldData) => {
+          return {
+            ...oldData,
+            userProgress: data.progress
+          };
+        });
+        
+        // Reset loading state
+        setIsAddingToLibrary(false);
+        
+        // Show success notification
+        showSuccess(t('manhwa.addedToLibrary'));
+      },
+      onError: (error) => {
+        setIsAddingToLibrary(false);
+        showError(error.message || t('common.error'));
+      }
     });
   };
   
@@ -202,10 +227,10 @@ const ManhwaDetails = () => {
     return (
       <Container maxWidth="lg">
         <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Skeleton variant="rectangular" height={500} />
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Skeleton variant="text" height={60} />
             <Skeleton variant="text" width="60%" />
             <Skeleton variant="text" />
@@ -250,7 +275,7 @@ const ManhwaDetails = () => {
     <Container maxWidth="lg">
       <Grid container spacing={4}>
         {/* Cover image and actions */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -284,51 +309,52 @@ const ManhwaDetails = () => {
                     fullWidth
                     onClick={handleAddToLibrary}
                     startIcon={<BookmarkAddIcon />}
+                    disabled={isAddingToLibrary}
                   >
-                    {t('manhwa.addToLibrary')}
+                    {isAddingToLibrary ? t('common.loading') : t('manhwa.addToLibrary')}
                   </Button>
                 ) : (
                   <>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      onClick={handleMenuOpen}
-                      endIcon={<MoreVertIcon />}
-                    >
-                      {t(`library.${userProgress.status || 'reading'}`)}
-                    </Button>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={Boolean(anchorEl)}
-                      onClose={handleMenuClose}
-                    >
-                      <MenuItem 
-                        onClick={() => handleStatusChange('reading')}
-                        selected={userProgress.status === 'reading'}
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        onClick={handleMenuOpen}
+                        endIcon={<MoreVertIcon />}
                       >
-                        {t('library.reading')}
-                      </MenuItem>
-                      <MenuItem 
-                        onClick={() => handleStatusChange('completed')}
-                        selected={userProgress.status === 'completed'}
+                        {t(`library.${userProgress.status || 'reading'}`)}
+                      </Button>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
                       >
-                        {t('library.completed')}
-                      </MenuItem>
-                      <MenuItem 
-                        onClick={() => handleStatusChange('plan_to_read')}
-                        selected={userProgress.status === 'plan_to_read'}
-                      >
-                        {t('library.planToRead')}
-                      </MenuItem>
-                      <MenuItem 
-                        onClick={() => handleStatusChange('dropped')}
-                        selected={userProgress.status === 'dropped'}
-                      >
-                        {t('library.dropped')}
-                      </MenuItem>
-                    </Menu>
-                  </>
-                )}
+                        <MenuItem 
+                          onClick={() => handleStatusChange('reading')}
+                          selected={userProgress.status === 'reading'}
+                        >
+                          {t('library.reading')}
+                        </MenuItem>
+                        <MenuItem 
+                          onClick={() => handleStatusChange('completed')}
+                          selected={userProgress.status === 'completed'}
+                        >
+                          {t('library.completed')}
+                        </MenuItem>
+                        <MenuItem 
+                          onClick={() => handleStatusChange('plan_to_read')}
+                          selected={userProgress.status === 'plan_to_read'}
+                        >
+                          {t('library.planToRead')}
+                        </MenuItem>
+                        <MenuItem 
+                          onClick={() => handleStatusChange('dropped')}
+                          selected={userProgress.status === 'dropped'}
+                        >
+                          {t('library.dropped')}
+                        </MenuItem>
+                      </Menu>
+                    </>
+                  )}
                 
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Button
@@ -357,7 +383,7 @@ const ManhwaDetails = () => {
         </Grid>
         
         {/* Manhwa details */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -381,7 +407,7 @@ const ManhwaDetails = () => {
             </Box>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   {t('manhwa.status')}
                 </Typography>
@@ -390,7 +416,7 @@ const ManhwaDetails = () => {
                 </Typography>
               </Grid>
               
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   {t('manhwa.author')}
                 </Typography>
@@ -399,7 +425,7 @@ const ManhwaDetails = () => {
                 </Typography>
               </Grid>
               
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   {t('manhwa.releaseDate')}
                 </Typography>
@@ -408,7 +434,7 @@ const ManhwaDetails = () => {
                 </Typography>
               </Grid>
               
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   {t('manhwa.rating')}
                 </Typography>
@@ -461,17 +487,17 @@ const ManhwaDetails = () => {
                           >
                             <ListItemText
                               primary={
-                                <Typography>
+                                <Box>
                                   {t('manhwa.chapterNumber', { number: chapter.chapter })}
                                   {chapter.title && `: ${chapter.title}`}
-                                </Typography>
+                                </Box>
                               }
                               secondary={
                                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                                   <AccessTimeIcon sx={{ fontSize: '0.875rem', mr: 0.5 }} />
-                                  <Typography variant="body2">
+                                  <Box component="span">
                                     {formatDate(chapter.publishedAt)}
-                                  </Typography>
+                                  </Box>
                                 </Box>
                               }
                             />
